@@ -123,6 +123,46 @@ Differentiator/fast:
 	$(MAKE) -f CMakeFiles/Differentiator.dir/build.make CMakeFiles/Differentiator.dir/build
 .PHONY : Differentiator/fast
 
+#=============================================================================
+# Target rules for targets named Tree
+
+# Build rule for target.
+Tree: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Tree
+.PHONY : Tree
+
+# fast build rule for target.
+Tree/fast:
+	$(MAKE) -f CMakeFiles/Tree.dir/build.make CMakeFiles/Tree.dir/build
+.PHONY : Tree/fast
+
+home/alexey/Programming/Tree/Tree.o: home/alexey/Programming/Tree/Tree.cpp.o
+
+.PHONY : home/alexey/Programming/Tree/Tree.o
+
+# target to build an object file
+home/alexey/Programming/Tree/Tree.cpp.o:
+	$(MAKE) -f CMakeFiles/Tree.dir/build.make CMakeFiles/Tree.dir/home/alexey/Programming/Tree/Tree.cpp.o
+.PHONY : home/alexey/Programming/Tree/Tree.cpp.o
+
+home/alexey/Programming/Tree/Tree.i: home/alexey/Programming/Tree/Tree.cpp.i
+
+.PHONY : home/alexey/Programming/Tree/Tree.i
+
+# target to preprocess a source file
+home/alexey/Programming/Tree/Tree.cpp.i:
+	$(MAKE) -f CMakeFiles/Tree.dir/build.make CMakeFiles/Tree.dir/home/alexey/Programming/Tree/Tree.cpp.i
+.PHONY : home/alexey/Programming/Tree/Tree.cpp.i
+
+home/alexey/Programming/Tree/Tree.s: home/alexey/Programming/Tree/Tree.cpp.s
+
+.PHONY : home/alexey/Programming/Tree/Tree.s
+
+# target to generate assembly for a file
+home/alexey/Programming/Tree/Tree.cpp.s:
+	$(MAKE) -f CMakeFiles/Tree.dir/build.make CMakeFiles/Tree.dir/home/alexey/Programming/Tree/Tree.cpp.s
+.PHONY : home/alexey/Programming/Tree/Tree.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -157,8 +197,12 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
-	@echo "... Differentiator"
 	@echo "... edit_cache"
+	@echo "... Differentiator"
+	@echo "... Tree"
+	@echo "... home/alexey/Programming/Tree/Tree.o"
+	@echo "... home/alexey/Programming/Tree/Tree.i"
+	@echo "... home/alexey/Programming/Tree/Tree.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

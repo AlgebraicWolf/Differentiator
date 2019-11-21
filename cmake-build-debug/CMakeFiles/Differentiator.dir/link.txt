@@ -1,1 +1,1 @@
-/usr/bin/g++  -g   CMakeFiles/Differentiator.dir/main.cpp.o  -o Differentiator 
+/usr/bin/g++  -g   CMakeFiles/Differentiator.dir/main.cpp.o  -o Differentiator libTree.a 

@@ -79,6 +79,7 @@ Differentiator_EXTERNAL_OBJECTS =
 
 Differentiator: CMakeFiles/Differentiator.dir/main.cpp.o
 Differentiator: CMakeFiles/Differentiator.dir/build.make
+Differentiator: libTree.a
 Differentiator: CMakeFiles/Differentiator.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/alexey/Programming/Differentiator/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable Differentiator"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Differentiator.dir/link.txt --verbose=$(VERBOSE)

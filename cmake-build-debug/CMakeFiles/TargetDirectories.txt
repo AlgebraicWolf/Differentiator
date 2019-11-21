@@ -1,3 +1,4 @@
 /home/alexey/Programming/Differentiator/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/alexey/Programming/Differentiator/cmake-build-debug/CMakeFiles/Differentiator.dir
 /home/alexey/Programming/Differentiator/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/alexey/Programming/Differentiator/cmake-build-debug/CMakeFiles/Differentiator.dir
+/home/alexey/Programming/Differentiator/cmake-build-debug/CMakeFiles/Tree.dir
