@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/alexey/Programming/Differentiator/main.cpp
+cstdlib
+-
+cstdio
+-
+cassert
+-
+cstring
+-
+../Tree/Tree.h
+/home/alexey/Programming/Tree/Tree.h
+
+/home/alexey/Programming/Tree/Tree.h
+cstdlib
+-
+cstdio
+-
+cassert
+-
+cstring
+-
+
