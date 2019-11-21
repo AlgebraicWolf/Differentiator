@@ -3,6 +3,7 @@
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
       <config projectName="Differentiator" targetName="Differentiator" />
+      <config projectName="Differentiator" targetName="Tree" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -12,8 +13,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fc4cd75f-437a-4b20-b9af-7ea2a9c42b42" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -32,6 +31,7 @@
   <component name="ProjectId" id="1Tw5jqYcDI0PSqeY0Jl3aR5Hwg4" />
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Akinator/main.cpp" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -72,6 +72,7 @@
       <option name="presentableId" value="Default" />
       <updated>1574358454099</updated>
       <workItem from="1574358457341" duration="955000" />
+      <workItem from="1574359425662" duration="171000" />
     </task>
     <servers />
   </component>
@@ -83,7 +84,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>
