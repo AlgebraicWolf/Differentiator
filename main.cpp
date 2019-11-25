@@ -34,6 +34,8 @@ node_t *getE(const char **e);
 
 node_t *getT(const char **e);
 
+tree_t *getG(const char *e);
+
 char *loadFile(const char *filename);
 
 size_t getFilesize(FILE *f);
@@ -43,32 +45,10 @@ void saveSubequation(node_t *subeq, FILE *output);
 void saveEquation(tree_t *eq, const char *filename);
 
 int main() {
-    operation_t ops[] = {
-            {
-                    0, 0, "sin", "", 0
-            },
-            {
-                    0, 0, "cos", "", 0
-            },
-            {
-                    0, 0, "/",   "", 0
-            },
-            {
-                    0, 0, "",    "", 10
-            },
-            {
-                    0, 0, "",    "", 20
-            }
-    };
-    tree_t *example = makeTree(ops + 2);
-    addLeftNode(example, example->head, ops + 0);
-    addRightNode(example, example->head, ops + 1);
-
-    addRightNode(example, example->head->left, ops + 3);
-    addRightNode(example, example->head->right, ops + 4);
-
-    printf("Loading equation...\n");
-    saveEquation(example, "test.txt");
+    char *eq = loadFile("input.txt");
+    tree_t *eqTree = getG(eq);
+    treeDump(eqTree, "dump.dot");
+    saveEquation(eqTree, "dump.txt");
     return 0;
 }
 
@@ -96,8 +76,10 @@ void saveEquation(tree_t *eq, const char *filename) {
 
 void saveSubequation(node_t *subeq, FILE *output) {
     fprintf(output, "%c", '(');
-    if (!subeq->left && !subeq->right) {
+    if (((operation_t *) subeq->value)->type == CONST) {
         fprintf(output, "%lf", ((operation_t *) subeq->value)->value);
+    } else if (((operation_t *) subeq->value)->type == VAR) {
+        fprintf(output, "%s", ((operation_t *) subeq->value)->operation);
     } else {
         if (subeq->left) {
             saveSubequation(subeq->left, output);
@@ -136,7 +118,7 @@ node_t *getN(const char **e) {
 
     int scanned = 0;
     double number = 0;
-    sscanf(*e, "%ld%n", &number, &scanned);
+    sscanf(*e, "%lf%n", &number, &scanned);
     if (!scanned)
         return nullptr;
 
@@ -158,7 +140,7 @@ node_t *getV(const char **e) {
         return nullptr;
 
     char *subst = (char *) calloc(len, sizeof(char));
-    memcpy(subst, e, len);
+    memcpy(subst, *e, len);
     (*e) += len;
 
     operation_t *var = makeOperation(VAR, subst, nullptr, nullptr, nullptr, nullptr, 0);
@@ -175,26 +157,29 @@ node_t *getP(const char **e) {
         nextChar(e);
         node_t *subtree = getE(e);
         skipWhitespaces(e);
-        if (**e == ')')
+        if (**e == ')') {
+            nextChar(e);
             return subtree;
+        }
         return nullptr;
     } else if (isdigit(**e)) {
         return getN(e);
     } else if (isalpha(**e)) {
-        node_t *subtree = getE(e);
+        node_t *subtree = getV(e);
         if (!subtree)
             return nullptr;
         if (**e == '(') {
             nextChar(e);
-            node_t *firstOp = getE(e);
+            node_t *firstOp = getV(e);
             if (!firstOp)
                 return nullptr;
 
             skipWhitespaces(e);
             if (**e == ')') {
                 ((operation_t *) subtree->value)->type = UNARY_FUNC;
-                node_t *func = makeNode(nullptr, nullptr, firstOp, subtree); //ADD FUNCTION PARSING
+                node_t *func = makeNode(nullptr, nullptr, firstOp, subtree); // TODO ADD FUNCTION PARSING
                 firstOp->parent = func;
+                nextChar(e);
                 return func;
             } else if (**e == ',') {
                 ((operation_t *) subtree->value)->type = BINARY_FUNC;
@@ -204,7 +189,7 @@ node_t *getP(const char **e) {
                 if (**e != ')' || !secondOp)
                     return nullptr;
                 nextChar(e);
-                node_t *func = makeNode(nullptr, firstOp, secondOp, subtree); // ADD FUNCTION PARSING
+                node_t *func = makeNode(nullptr, firstOp, secondOp, subtree); // TODO ADD FUNCTION PARSING
                 firstOp->parent = func;
                 secondOp->parent = func;
                 return func;
@@ -213,14 +198,106 @@ node_t *getP(const char **e) {
             }
 
         }
+        return subtree;
     } else {
         return nullptr;
     }
 }
 
+
+node_t *getFirstPriotityOp(char op) {
+#define DEF_LAST_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_FIRST_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE) \
+    if(*OPERATION == op) { \
+        operation_t *oper = makeOperation(TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, 0); \
+        node_t *node = makeNode(nullptr, nullptr, nullptr, oper); \
+        return node; \
+    }  \
+    else
+
+#include "operations.h"
+
+    return nullptr;
+
+#undef DEF_FIRST_OP
+#undef DEF_LAST_OP
+#undef DEF_OP
+}
+
+node_t *getLastPriotityOp(char op) {
+#define DEF_FIRST_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_LAST_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE) \
+    if(*OPERATION == op) { \
+        operation_t *oper = makeOperation(TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, 0); \
+        node_t *node = makeNode(nullptr, nullptr, nullptr, oper); \
+        return node; \
+    }  \
+    else
+
+#include "operations.h"
+
+    return nullptr;
+
+#undef DEF_LAST_OP
+#undef DEF_FIRST_OP
+#undef DEF_OP
+}
+
+void mergeSubtrees(node_t *subtree, node_t *subtree2, node_t *suptree) {
+    assert(subtree);
+    assert(subtree2);
+    assert(suptree);
+
+    subtree->parent = suptree;
+    subtree2->parent = suptree;
+    suptree->left = subtree;
+    suptree->right = subtree2;
+}
+
 node_t *getT(const char **e) {
     assert(e);
     assert(*e);
+
+    node_t *subtree = getP(e);
+    node_t *suptree = nullptr;
+    while ((suptree = getFirstPriotityOp(**e))) {
+        nextChar(e);
+        node_t *subtree2 = getP(e);
+        mergeSubtrees(subtree, subtree2, suptree);
+        subtree = suptree;
+    }
+
+    return subtree;
+}
+
+node_t *getE(const char **e) {
+    assert(e);
+    assert(*e);
+
+    node_t *subtree = getT(e);
+    node_t *suptree = nullptr;
+    while ((suptree = getLastPriotityOp(**e))) {
+        nextChar(e);
+        node_t *subtree2 = getT(e);
+        mergeSubtrees(subtree, subtree2, suptree);
+        subtree = suptree;
+    }
+    return subtree;
+}
+
+tree_t *getG(const char *e) {
+    assert(e);
+    node_t *subtree = getE(&e);
+    if (*e != '\0')
+        return nullptr;
+
+    tree_t *tree = makeTree(nullptr);
+    deleteNode(tree->head);
+    tree->head = subtree;
+
+    return tree;
 }
 
 tree_t *loadEquation(char *filename) {

@@ -15,8 +15,16 @@ cassert
 -
 cstring
 -
+cctype
+-
 ../Tree/Tree.h
 /home/alexey/Programming/Tree/Tree.h
+operations.h
+/home/alexey/Programming/Differentiator/operations.h
+operations.h
+/home/alexey/Programming/Differentiator/operations.h
+
+/home/alexey/Programming/Differentiator/operations.h
 
 /home/alexey/Programming/Tree/Tree.h
 cstdlib

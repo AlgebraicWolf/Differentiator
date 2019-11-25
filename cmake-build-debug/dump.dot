@@ -1,0 +1,16 @@
+digraph {
+concentrate=true
+node0x559c352d1150[shape=record, label="{0x559c352d1150 | {PARENT|(nil)} | {{LEFT |<left> 0x559c352d10e0} | {RIGHT |<right> 0x559c352d1230}}}", style=filled, fillcolor=mediumturquoise];
+node0x559c352d10e0[shape=record, label="{0x559c352d10e0 | {PARENT|0x559c352d1150} | {{LEFT |<left> (nil)} | {RIGHT |<right> (nil)}}}", style=filled, fillcolor=indianred];
+node0x559c352d10e0 -> node0x559c352d1150:left;
+node0x559c352d1150:left -> node0x559c352d10e0;
+node0x559c352d1230[shape=record, label="{0x559c352d1230 | {PARENT|0x559c352d1150} | {{LEFT |<left> 0x559c352d11c0} | {RIGHT |<right> 0x559c352d12c0}}}", style=filled, fillcolor=springgreen];
+node0x559c352d1230 -> node0x559c352d1150:right;
+node0x559c352d1150:right -> node0x559c352d1230;
+node0x559c352d11c0[shape=record, label="{0x559c352d11c0 | {PARENT|0x559c352d1230} | {{LEFT |<left> (nil)} | {RIGHT |<right> (nil)}}}", style=filled, fillcolor=indianred];
+node0x559c352d11c0 -> node0x559c352d1230:left;
+node0x559c352d1230:left -> node0x559c352d11c0;
+node0x559c352d12c0[shape=record, label="{0x559c352d12c0 | {PARENT|0x559c352d1230} | {{LEFT |<left> (nil)} | {RIGHT |<right> (nil)}}}", style=filled, fillcolor=springgreen];
+node0x559c352d12c0 -> node0x559c352d1230:right;
+node0x559c352d1230:right -> node0x559c352d12c0;
+}
