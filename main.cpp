@@ -6,16 +6,33 @@
 
 #include "../Tree/Tree.h"
 
+enum OP_TYPE {
+    VAR, // x
+    CONST, // 1
+    UNARY_FUNC, // sin(x)
+    BINARY, // 2 * 3
+    BINARY_FUNC //pow(x, x)
+};
 
 struct operation_t {
-    int priority;
-    int argnum;
+    OP_TYPE type;
     char *operation;
     char *latexPrefix;
     char *latexInfix;
     char *latexSuffix;
+    void *exec;
     double value;
 };
+
+node_t *getP(const char **e);
+
+node_t *getV(const char **e);
+
+node_t *getN(const char **e);
+
+node_t *getE(const char **e);
+
+node_t *getT(const char **e);
 
 char *loadFile(const char *filename);
 
@@ -28,19 +45,19 @@ void saveEquation(tree_t *eq, const char *filename);
 int main() {
     operation_t ops[] = {
             {
-                 0, 0, "sin", "", 0
+                    0, 0, "sin", "", 0
             },
             {
-                0, 0, "cos", "", 0
+                    0, 0, "cos", "", 0
             },
             {
-                0, 0, "/", "" , 0
+                    0, 0, "/",   "", 0
             },
             {
-                0, 0, "", "", 10
+                    0, 0, "",    "", 10
             },
             {
-                0, 0, "", "", 20
+                    0, 0, "",    "", 20
             }
     };
     tree_t *example = makeTree(ops + 2);
@@ -55,15 +72,17 @@ int main() {
     return 0;
 }
 
-operation_t *makeOperation(int priority, int argnum, char *operation, char *latexPrefix, char *latexInfix, char *latexSuffix, double value) {
+operation_t *
+makeOperation(OP_TYPE type, char *operation, char *latexPrefix, char *latexInfix, char *latexSuffix, void *exec,
+              double value) {
     operation_t *op = (operation_t *) calloc(1, sizeof(operation_t));
 
-    op->priority = priority;
-    op->argnum = argnum;
+    op->type = type;
     op->operation = operation;
     op->latexInfix = latexInfix;
     op->latexPrefix = latexPrefix;
     op->latexSuffix = latexSuffix;
+    op->exec = exec;
     op->value = value;
 
     return op;
@@ -78,13 +97,13 @@ void saveEquation(tree_t *eq, const char *filename) {
 void saveSubequation(node_t *subeq, FILE *output) {
     fprintf(output, "%c", '(');
     if (!subeq->left && !subeq->right) {
-        fprintf(output, "%lf", ((operation_t *)subeq->value)->value);
+        fprintf(output, "%lf", ((operation_t *) subeq->value)->value);
     } else {
         if (subeq->left) {
             saveSubequation(subeq->left, output);
         }
 
-            fprintf(output, "%s", ((operation_t *)subeq->value)->operation);
+        fprintf(output, "%s", ((operation_t *) subeq->value)->operation);
 
         if (subeq->right) {
             saveSubequation(subeq->right, output);
@@ -93,58 +112,122 @@ void saveSubequation(node_t *subeq, FILE *output) {
     fprintf(output, "%c", ')');
 }
 
-void loadSubequation(node_t *node, char *serialized) {
-    serialized = strchr(serialized, '(') + 1;
-    char *begin = serialized;
-    serialized = strchr(serialized, '(') + 1;
+void skipWhitespaces(const char **e) {
+    assert(e);
+    assert(*e);
+    while (isblank(**e) && **e)
+        (*e)++;
+}
 
-    int level = 1;
-    while(level) {
-        if(*serialized == '(')
-            level++;
-        else if (*serialized == ')')
-            level--;
-        serialized++;
+void nextChar(const char **e) {
+    skipWhitespaces(e);
+    (*e)++;
+    skipWhitespaces(e);
+}
+
+void skipChars(const char **e, int n) {
+    for (int i = 0; i < n; i++)
+        nextChar(e);
+}
+
+node_t *getN(const char **e) {
+    assert(e);
+    assert(*e);
+
+    int scanned = 0;
+    double number = 0;
+    sscanf(*e, "%ld%n", &number, &scanned);
+    if (!scanned)
+        return nullptr;
+
+    skipChars(e, scanned);
+    operation_t *op = makeOperation(CONST, nullptr, nullptr, nullptr, nullptr, nullptr, number);
+    return makeNode(nullptr, nullptr, nullptr, op);
+}
+
+node_t *getV(const char **e) {
+    assert(e);
+    assert(*e);
+
+    int len = 0;
+    while (isalpha(*(*e + len))) {
+        len++;
     }
-    char *lexemeBegin = serialized + 1;
-    char *lexemeEnd = strchr(lexemeBegin, ')');
 
-    while (isblank(*lexemeBegin ))
-        lexemeBegin++;
+    if (!len)
+        return nullptr;
 
-    while(isblank(*(lexemeEnd-1)))
-        lexemeEnd--;
+    char *subst = (char *) calloc(len, sizeof(char));
+    memcpy(subst, e, len);
+    (*e) += len;
 
-    char oldLexeme = *lexemeEnd;
+    operation_t *var = makeOperation(VAR, subst, nullptr, nullptr, nullptr, nullptr, 0);
+    node_t *node = makeNode(nullptr, nullptr, nullptr, var);
 
-    *lexemeEnd = '\0';
+    return node;
+}
 
-#define DEF_OP(ID, ARGNUM, PRIORITY, LEXEME, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE) {\
-    if(strcmp(LEXENE, lexemeBegin) == 0) { \
-        operation_t *op = makeOperation(PRIORITY, ARGNUM, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, 0);\
-    }\
-    else \
-}\
+node_t *getP(const char **e) {
+    assert(e);
+    assert(*e);
 
-#include "operations.h"
-    {
-        double val = 0;
-        sscanf(lexemeBegin, "%lf", &val);
-        operation_t *op = makeOperation(1000, 0, "", "", "", "", val);
+    if (**e == '(') {
+        nextChar(e);
+        node_t *subtree = getE(e);
+        skipWhitespaces(e);
+        if (**e == ')')
+            return subtree;
+        return nullptr;
+    } else if (isdigit(**e)) {
+        return getN(e);
+    } else if (isalpha(**e)) {
+        node_t *subtree = getE(e);
+        if (!subtree)
+            return nullptr;
+        if (**e == '(') {
+            nextChar(e);
+            node_t *firstOp = getE(e);
+            if (!firstOp)
+                return nullptr;
+
+            skipWhitespaces(e);
+            if (**e == ')') {
+                ((operation_t *) subtree->value)->type = UNARY_FUNC;
+                node_t *func = makeNode(nullptr, nullptr, firstOp, subtree); //ADD FUNCTION PARSING
+                firstOp->parent = func;
+                return func;
+            } else if (**e == ',') {
+                ((operation_t *) subtree->value)->type = BINARY_FUNC;
+                nextChar(e);
+                node_t *secondOp = getE(e);
+                skipWhitespaces(e);
+                if (**e != ')' || !secondOp)
+                    return nullptr;
+                nextChar(e);
+                node_t *func = makeNode(nullptr, firstOp, secondOp, subtree); // ADD FUNCTION PARSING
+                firstOp->parent = func;
+                secondOp->parent = func;
+                return func;
+            } else {
+                return nullptr;
+            }
+
+        }
+    } else {
+        return nullptr;
     }
+}
 
-#undef DEF_OP
-    *lexemeEnd = oldLexeme;
-    *lexemeBegin = '\0';
-    node->value = op;
+node_t *getT(const char **e) {
+    assert(e);
+    assert(*e);
 }
 
 tree_t *loadEquation(char *filename) {
     char *serialized = loadFile(filename);
     tree_t *parsed = makeTree(nullptr);
-    loadSubequation(parsed->head, nullptr);
+    //loadSubequation(parsed->head, nullptr);
 }
-
 
 
 size_t getFilesize(FILE *f) {
