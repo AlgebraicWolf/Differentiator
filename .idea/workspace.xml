@@ -15,10 +15,15 @@
     <list default="true" id="fc4cd75f-437a-4b20-b9af-7ea2a9c42b42" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/CXX.includecache" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/CXX.includecache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/depend.internal" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/depend.internal" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/depend.make" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/depend.make" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/main.cpp.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/main.cpp.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Tree.dir/home/alexey/Programming/Tree/Tree.cpp.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Tree.dir/home/alexey/Programming/Tree/Tree.cpp.o" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/Differentiator" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Differentiator" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/dump.dot" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/dump.dot" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/dump.dot.png" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/dump.dot.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/dump.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/dump.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/input.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/input.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/libTree.a" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/libTree.a" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/operations.h" beforeDir="false" afterPath="$PROJECT_DIR$/operations.h" afterDir="false" />
     </list>
@@ -96,6 +101,11 @@
       <workItem from="1574686305348" duration="5098000" />
       <workItem from="1574692535410" duration="3221000" />
       <workItem from="1574708095914" duration="6686000" />
+      <workItem from="1574759029242" duration="75000" />
+      <workItem from="1574764323147" duration="1449000" />
+      <workItem from="1575016750582" duration="32000" />
+      <workItem from="1575019516346" duration="7479000" />
+      <workItem from="1575032745865" duration="2725000" />
     </task>
     <servers />
   </component>
@@ -120,20 +130,22 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.cpp</url>
-          <line>266</line>
-          <option name="timeStamp" value="1" />
+          <line>226</line>
+          <option name="timeStamp" value="11" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.cpp</url>
-          <line>48</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/main.cpp</url>
-          <line>141</line>
-          <option name="timeStamp" value="4" />
+          <line>140</line>
+          <option name="timeStamp" value="13" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="CMakeRunConfiguration">
+        <watch expression="((operation_t *) node-&gt;value)-&gt;parenthesisPriority" language="ObjectiveC" />
+        <watch expression="((operation_t *) node-&gt;parent-&gt;value)-&gt;parenthesisPriority" language="ObjectiveC" />
+        <watch expression="op" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>

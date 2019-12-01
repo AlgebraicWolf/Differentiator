@@ -15,6 +15,7 @@ enum OP_TYPE {
 };
 
 struct operation_t {
+    int parenthesisPriority;
     OP_TYPE type;
     char *operation;
     char *latexPrefix;
@@ -23,6 +24,8 @@ struct operation_t {
     void *exec;
     double value;
 };
+
+const int VAR_CONST_PRIORITY = 1;
 
 node_t *getP(const char **e);
 
@@ -44,19 +47,42 @@ void saveSubequation(node_t *subeq, FILE *output);
 
 void saveEquation(tree_t *eq, const char *filename);
 
+void saveLaTeX(tree_t *tree, FILE *f);
+
+char *dumpOperation (void *op) {
+    operation_t *o = (operation_t *) op;
+    char *buf = (char *) calloc(64, sizeof(char));
+    if (o->type == CONST) {
+        sprintf(buf, "%s: %lg", "CONST", o->value);
+    } else if(o->type == VAR) {
+        sprintf(buf, "%s: %s", "VAR", o->operation);
+    } else if(o->type == UNARY_FUNC) {
+        sprintf(buf, "%s: %s", "UNARY_FUNC", o->operation);
+    } else if(o->type == BINARY) {
+        sprintf(buf, "%s: %s", "BINARY", o->operation);
+    } else if (o->type == BINARY_FUNC) {
+        sprintf(buf, "%s: %s", "BINARY_FUNC", o->operation);
+    }
+    return buf;
+}
+
 int main() {
     char *eq = loadFile("input.txt");
     tree_t *eqTree = getG(eq);
-    treeDump(eqTree, "dump.dot");
     saveEquation(eqTree, "dump.txt");
+    FILE *tex = fopen("test.tex", "w");
+    saveLaTeX(eqTree, tex);
+    fclose(tex);
+    treeDump(eqTree, "dump.dot", dumpOperation);
     return 0;
 }
 
 operation_t *
-makeOperation(OP_TYPE type, char *operation, char *latexPrefix, char *latexInfix, char *latexSuffix, void *exec,
+makeOperation(int parenthesisPriority, OP_TYPE type, char *operation, char *latexPrefix, char *latexInfix, char *latexSuffix, void *exec,
               double value) {
     operation_t *op = (operation_t *) calloc(1, sizeof(operation_t));
 
+    op->parenthesisPriority = parenthesisPriority;
     op->type = type;
     op->operation = operation;
     op->latexInfix = latexInfix;
@@ -112,6 +138,55 @@ void skipChars(const char **e, int n) {
         nextChar(e);
 }
 
+void saveNode(node_t *node, FILE *f) {
+    assert(node);
+    assert(f);
+
+    operation_t *op = (operation_t *) node->value;
+
+    if(node->parent) {
+        if ((op->parenthesisPriority) < (((operation_t *) node->parent->value)->parenthesisPriority)) {
+            fprintf(f, "\\left(");
+        }
+    }
+
+    if (op->type == CONST) {
+        fprintf(f, "%lg", op->value);
+    }
+    else if(op->type == VAR) {
+        fprintf(f, "%s", op->operation);
+    }
+    else if(op->type == UNARY_FUNC){
+        fprintf(f, "%s", op->latexPrefix);
+        saveNode(node->right, f);
+        fprintf(f, "%s%s", op->latexInfix, op->latexSuffix);
+    }
+    else if(op->type == BINARY_FUNC || op->type == BINARY) {
+        fprintf(f, "%s", op->latexPrefix);
+        saveNode(node->left, f);
+        fprintf(f, "%s", op->latexInfix);
+        saveNode(node->right, f);
+        fprintf(f, "%s", op->latexSuffix);
+    }
+
+    if(node->parent) {
+        if (op->parenthesisPriority < ((operation_t *) node->parent->value)->parenthesisPriority) {
+            fprintf(f, "\\right)");
+        }
+    }
+}
+
+void saveLaTeX(tree_t *tree, FILE *f) {
+    assert(tree);
+    assert(f);
+    node_t *node = tree->head;
+    fprintf(f, "\\begin{equation}\n");
+    saveNode(node, f);
+    fprintf(f, "\n\\end{equation}");
+}
+
+
+
 node_t *getN(const char **e) {
     assert(e);
     assert(*e);
@@ -123,7 +198,7 @@ node_t *getN(const char **e) {
         return nullptr;
 
     skipChars(e, scanned);
-    operation_t *op = makeOperation(CONST, nullptr, nullptr, nullptr, nullptr, nullptr, number);
+    operation_t *op = makeOperation(VAR_CONST_PRIORITY, CONST, nullptr, nullptr, nullptr, nullptr, nullptr, number);
     return makeNode(nullptr, nullptr, nullptr, op);
 }
 
@@ -143,10 +218,35 @@ node_t *getV(const char **e) {
     memcpy(subst, *e, len);
     (*e) += len;
 
-    operation_t *var = makeOperation(VAR, subst, nullptr, nullptr, nullptr, nullptr, 0);
+    operation_t *var = makeOperation(VAR_CONST_PRIORITY, VAR, subst, nullptr, nullptr, nullptr, nullptr, 0);
     node_t *node = makeNode(nullptr, nullptr, nullptr, var);
 
     return node;
+}
+
+void parseFunction(node_t *func) {
+    assert(func);
+    operation_t *op = (operation_t *) func->value;
+
+#define DEF_LAST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_FIRST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE) \
+    if(op->type == TYPE) { \
+        if(strcmp(OPERATION, op->operation) == 0) { \
+            op->parenthesisPriority = PRIOR; \
+            op->latexPrefix = LATEX_PREFIX; \
+            op->latexInfix = LATEX_INFIX; \
+            op->latexSuffix = LATEX_SUFFIX; \
+            op->exec = EXEC_OPERATION; \
+        } \
+    }
+
+#include "operations.h"
+
+#undef DEF_FIRST_OP
+#undef DEF_LAST_OP
+#undef DEF_OP
+
 }
 
 node_t *getP(const char **e) {
@@ -170,17 +270,18 @@ node_t *getP(const char **e) {
             return nullptr;
         if (**e == '(') {
             nextChar(e);
-            node_t *firstOp = getV(e);
+            node_t *firstOp = getE(e);
             if (!firstOp)
                 return nullptr;
 
             skipWhitespaces(e);
             if (**e == ')') {
                 ((operation_t *) subtree->value)->type = UNARY_FUNC;
-                node_t *func = makeNode(nullptr, nullptr, firstOp, subtree); // TODO ADD FUNCTION PARSING
-                firstOp->parent = func;
+                parseFunction(subtree);
+                firstOp->parent = subtree;
+                subtree->right = firstOp;
                 nextChar(e);
-                return func;
+                return subtree;
             } else if (**e == ',') {
                 ((operation_t *) subtree->value)->type = BINARY_FUNC;
                 nextChar(e);
@@ -189,10 +290,12 @@ node_t *getP(const char **e) {
                 if (**e != ')' || !secondOp)
                     return nullptr;
                 nextChar(e);
-                node_t *func = makeNode(nullptr, firstOp, secondOp, subtree); // TODO ADD FUNCTION PARSING
-                firstOp->parent = func;
-                secondOp->parent = func;
-                return func;
+                parseFunction(subtree);
+                firstOp->parent = subtree;
+                secondOp->parent = subtree;
+                subtree->left = firstOp;
+                subtree->right = secondOp;
+                return subtree;
             } else {
                 return nullptr;
             }
@@ -206,11 +309,11 @@ node_t *getP(const char **e) {
 
 
 node_t *getFirstPriotityOp(char op) {
-#define DEF_LAST_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE)
-#define DEF_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE)
-#define DEF_FIRST_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE) \
+#define DEF_LAST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_FIRST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE) \
     if(*OPERATION == op) { \
-        operation_t *oper = makeOperation(TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, 0); \
+        operation_t *oper = makeOperation(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, 0); \
         node_t *node = makeNode(nullptr, nullptr, nullptr, oper); \
         return node; \
     }  \
@@ -226,11 +329,11 @@ node_t *getFirstPriotityOp(char op) {
 }
 
 node_t *getLastPriotityOp(char op) {
-#define DEF_FIRST_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE)
-#define DEF_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE)
-#define DEF_LAST_OP(TYPE, OPERATION, LATEX_PREFIX, LATEX_SUFFIX, LATEX_INFIX, EXEC_OPERATION, DERIVATIVE) \
+#define DEF_FIRST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE)
+#define DEF_LAST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE) \
     if(*OPERATION == op) { \
-        operation_t *oper = makeOperation(TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, 0); \
+        operation_t *oper = makeOperation(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, 0); \
         node_t *node = makeNode(nullptr, nullptr, nullptr, oper); \
         return node; \
     }  \
@@ -262,6 +365,7 @@ node_t *getT(const char **e) {
 
     node_t *subtree = getP(e);
     node_t *suptree = nullptr;
+    skipWhitespaces(e);
     while ((suptree = getFirstPriotityOp(**e))) {
         nextChar(e);
         node_t *subtree2 = getP(e);
@@ -278,6 +382,7 @@ node_t *getE(const char **e) {
 
     node_t *subtree = getT(e);
     node_t *suptree = nullptr;
+    skipWhitespaces(e);
     while ((suptree = getLastPriotityOp(**e))) {
         nextChar(e);
         node_t *subtree2 = getT(e);
