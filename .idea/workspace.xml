@@ -23,7 +23,7 @@
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/dump.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/dump.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/input.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/input.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/libTree.a" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/libTree.a" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test.tex" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test.tex" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/operations.h" beforeDir="false" afterPath="$PROJECT_DIR$/operations.h" afterDir="false" />
     </list>
@@ -106,6 +106,7 @@
       <workItem from="1575016750582" duration="32000" />
       <workItem from="1575019516346" duration="7479000" />
       <workItem from="1575032745865" duration="2725000" />
+      <workItem from="1575217680601" duration="17545000" />
     </task>
     <servers />
   </component>
@@ -130,13 +131,18 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.cpp</url>
-          <line>226</line>
+          <line>414</line>
           <option name="timeStamp" value="11" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.cpp</url>
-          <line>140</line>
+          <line>145</line>
           <option name="timeStamp" value="13" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/main.cpp</url>
+          <line>107</line>
+          <option name="timeStamp" value="14" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -145,6 +151,9 @@
         <watch expression="((operation_t *) node-&gt;value)-&gt;parenthesisPriority" language="ObjectiveC" />
         <watch expression="((operation_t *) node-&gt;parent-&gt;value)-&gt;parenthesisPriority" language="ObjectiveC" />
         <watch expression="op" />
+        <watch expression="eq" />
+        <watch expression="(operation_t *) opNode" language="ObjectiveC" />
+        <watch expression="(operation_t *)subeq-&gt;value" language="ObjectiveC" />
       </configuration>
     </watches-manager>
   </component>

@@ -49,16 +49,20 @@ void saveEquation(tree_t *eq, const char *filename);
 
 void saveLaTeX(tree_t *tree, FILE *f);
 
-char *dumpOperation (void *op) {
+void parseFunction(node_t *func);
+
+tree_t *differentiateEquation(tree_t *eq);
+
+char *dumpOperation(void *op) {
     operation_t *o = (operation_t *) op;
     char *buf = (char *) calloc(64, sizeof(char));
     if (o->type == CONST) {
         sprintf(buf, "%s: %lg", "CONST", o->value);
-    } else if(o->type == VAR) {
+    } else if (o->type == VAR) {
         sprintf(buf, "%s: %s", "VAR", o->operation);
-    } else if(o->type == UNARY_FUNC) {
+    } else if (o->type == UNARY_FUNC) {
         sprintf(buf, "%s: %s", "UNARY_FUNC", o->operation);
-    } else if(o->type == BINARY) {
+    } else if (o->type == BINARY) {
         sprintf(buf, "%s: %s", "BINARY", o->operation);
     } else if (o->type == BINARY_FUNC) {
         sprintf(buf, "%s: %s", "BINARY_FUNC", o->operation);
@@ -69,16 +73,17 @@ char *dumpOperation (void *op) {
 int main() {
     char *eq = loadFile("input.txt");
     tree_t *eqTree = getG(eq);
-    saveEquation(eqTree, "dump.txt");
+    saveEquation(differentiateEquation(eqTree), "dump.txt");
     FILE *tex = fopen("test.tex", "w");
-    saveLaTeX(eqTree, tex);
+    saveLaTeX(differentiateEquation(eqTree), tex);
     fclose(tex);
     treeDump(eqTree, "dump.dot", dumpOperation);
     return 0;
 }
 
 operation_t *
-makeOperation(int parenthesisPriority, OP_TYPE type, char *operation, char *latexPrefix, char *latexInfix, char *latexSuffix, void *exec,
+makeOperation(int parenthesisPriority, OP_TYPE type, char *operation, char *latexPrefix, char *latexInfix,
+              char *latexSuffix, void *exec,
               double value) {
     operation_t *op = (operation_t *) calloc(1, sizeof(operation_t));
 
@@ -144,7 +149,7 @@ void saveNode(node_t *node, FILE *f) {
 
     operation_t *op = (operation_t *) node->value;
 
-    if(node->parent) {
+    if (node->parent) {
         if ((op->parenthesisPriority) < (((operation_t *) node->parent->value)->parenthesisPriority)) {
             fprintf(f, "\\left(");
         }
@@ -152,16 +157,13 @@ void saveNode(node_t *node, FILE *f) {
 
     if (op->type == CONST) {
         fprintf(f, "%lg", op->value);
-    }
-    else if(op->type == VAR) {
+    } else if (op->type == VAR) {
         fprintf(f, "%s", op->operation);
-    }
-    else if(op->type == UNARY_FUNC){
+    } else if (op->type == UNARY_FUNC) {
         fprintf(f, "%s", op->latexPrefix);
         saveNode(node->right, f);
         fprintf(f, "%s%s", op->latexInfix, op->latexSuffix);
-    }
-    else if(op->type == BINARY_FUNC || op->type == BINARY) {
+    } else if (op->type == BINARY_FUNC || op->type == BINARY) {
         fprintf(f, "%s", op->latexPrefix);
         saveNode(node->left, f);
         fprintf(f, "%s", op->latexInfix);
@@ -169,23 +171,209 @@ void saveNode(node_t *node, FILE *f) {
         fprintf(f, "%s", op->latexSuffix);
     }
 
-    if(node->parent) {
+    if (node->parent) {
         if (op->parenthesisPriority < ((operation_t *) node->parent->value)->parenthesisPriority) {
             fprintf(f, "\\right)");
         }
     }
 }
 
+bool optimiseZeroOneMultiplication(node_t *node) {
+    assert(node);
+    operation_t *op = (operation_t *) node->value;
+    if (op->operation)
+        if (strcmp(op->operation, "*") == 0) {
+            operation_t *r = (operation_t *) node->right->value;
+            operation_t *l = (operation_t *) node->left->value;
+            if (r->value == 1 && r->type == CONST) {
+                node->value = node->left->value;
+                node->right = node->left->right;
+                node->left = node->left->left;
+                return true;
+            } else if (l->value == 1 && l->type == CONST) {
+                node->value = node->right->value;
+                node->left = node->right->left;
+                node->right = node->right->right;
+                return true;
+            } else if (l->value == 0 && l->type == CONST) {
+                node->value = node->left->value;
+                node->left = nullptr;
+                node->right = nullptr;
+                return true;
+            } else if (r->value == 0 && r->type == CONST) {
+                node->value = node->left->value;
+                node->left = nullptr;
+                node->right = nullptr;
+            }
+        }
+    bool flag = false;
+
+    if (node->left)
+        flag += optimiseZeroOneMultiplication(node->left);
+
+    if (node->right)
+        flag += optimiseZeroOneMultiplication(node->right);
+
+    return flag;
+}
+
+bool optimiseZeroAddition(node_t *node) {
+    assert(node);
+    operation_t *op = (operation_t *) node->value;
+
+    if (op->operation)
+        if (strcmp(op->operation, "+") == 0) {
+            operation_t *r = (operation_t *) node->right->value;
+            operation_t *l = (operation_t *) node->left->value;
+            if (r->value == 0 && r->type == CONST) {
+                node->value = node->left->value;
+                node->right = node->left->right;
+                node->left = node->left->left;
+                return true;
+            } else if (l->value == 0 && l->type == CONST) {
+                node->value = node->right->value;
+                node->left = node->right->left;
+                node->right = node->right->right;
+                return true;
+            }
+        }
+    bool flag = false;
+
+    if (node->left)
+        flag += optimiseZeroAddition(node->left);
+
+    if (node->right)
+        flag += optimiseZeroAddition(node->right);
+
+    return flag;
+}
+
 void saveLaTeX(tree_t *tree, FILE *f) {
     assert(tree);
     assert(f);
     node_t *node = tree->head;
+
     fprintf(f, "\\begin{equation}\n");
     saveNode(node, f);
     fprintf(f, "\n\\end{equation}");
 }
 
+operation_t *copyOp(operation_t *op) {
+    return makeOperation(op->parenthesisPriority, op->type, op->operation, op->latexPrefix, op->latexInfix,
+                         op->latexSuffix, op->exec, op->value);
+}
 
+node_t *copySubtree(node_t *subtree) {
+    assert(subtree);
+    node_t *leftSubtree = nullptr;
+    node_t *rightSubtree = nullptr;
+
+    if (subtree->left)
+        leftSubtree = copySubtree(subtree->left);
+
+    if (subtree->right)
+        rightSubtree = copySubtree(subtree->right);
+
+
+    node_t *copy = makeNode(nullptr, leftSubtree, rightSubtree, copyOp((operation_t *) subtree->value));
+    if (rightSubtree)
+        rightSubtree->parent = copy;
+
+    if (leftSubtree)
+        leftSubtree->parent = copy;
+
+    return copy;
+}
+
+operation_t *makeOperationByName(const char *op) {
+    assert(op);
+
+    operation_t *operation = nullptr;
+#define DEF_LAST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE) \
+        if(strcmp(OPERATION, op) == 0) { \
+            return makeOperation (PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, 0); \
+        }
+#define DEF_FIRST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE) \
+        if(strcmp(OPERATION, op) == 0) { \
+            return makeOperation (PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, 0); \
+        }
+#define DEF_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE) \
+        if(strcmp(OPERATION, op) == 0) { \
+            return makeOperation (PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, 0); \
+        }
+
+#include "operations.h"
+
+#undef DEF_FIRST_OP
+#undef DEF_LAST_OP
+#undef DEF_OP
+}
+
+node_t *differentiateNode(node_t *opNode) {
+    assert(opNode);
+    operation_t *op = (operation_t *) opNode->value;
+
+
+    switch (op->type) {
+        case CONST: {
+            operation_t *newOp = makeOperation(VAR_CONST_PRIORITY, CONST, nullptr, nullptr, nullptr, nullptr, nullptr,
+                                               0);
+            return makeNode(nullptr, nullptr, nullptr, newOp);
+        }
+
+        case VAR: {
+            operation_t *newOp = makeOperation(VAR_CONST_PRIORITY, CONST, nullptr, nullptr, nullptr, nullptr, nullptr,
+                                               1);
+            return makeNode(nullptr, nullptr, nullptr, newOp);
+        }
+
+        default: {
+#define CONST(x) makeNode(nullptr, nullptr, nullptr, makeOperation(VAR_CONST_PRIORITY, CONST, nullptr, nullptr, nullptr, nullptr, nullptr, (x)))
+#define dL differentiateNode(opNode->left)
+#define dR differentiateNode(opNode->right)
+#define L copySubtree(opNode->left)
+#define R copySubtree(opNode->right)
+#define DFUNC(op, subtree1, subtree2) makeNode(nullptr, subtree1, subtree2, makeOperationByName(op))
+#define FUNC(op, subtree) makeNode(nullptr, nullptr, subtree, makeOperationByName(op))
+
+#define DEF_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE)  if(strcmp(OPERATION, op->operation) == 0) return DERIVATIVE;
+#define DEF_FIRST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE) if(strcmp(OPERATION, op->operation) == 0) return DERIVATIVE;
+#define DEF_LAST_OP(PRIOR, TYPE, OPERATION, LATEX_PREFIX, LATEX_INFIX, LATEX_SUFFIX, EXEC_OPERATION, DERIVATIVE) if(strcmp(OPERATION, op->operation) == 0) return DERIVATIVE;
+
+#include "operations.h"
+
+#undef DEF_OP
+#undef DEF_FIRST_OP
+#undef DEF_LAST_OP
+
+#undef dL
+#undef dR
+#undef L
+#undef R
+#undef DFUNC
+#undef FUNC
+            break;
+        }
+    }
+}
+
+tree_t *differentiateEquation(tree_t *eq) {
+    assert(eq);
+
+    tree_t *derivative = makeTree(nullptr);
+    deleteNode(derivative->head);
+    derivative->head = differentiateNode(eq->head);
+
+    bool optStep = true;
+
+    while (optStep) {
+        optStep = false;
+        optStep += optimiseZeroOneMultiplication(derivative->head);
+        optStep += optimiseZeroAddition(derivative->head);
+    }
+
+    return derivative;
+}
 
 node_t *getN(const char **e) {
     assert(e);
