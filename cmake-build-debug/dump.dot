@@ -1,16 +1,16 @@
 digraph {
 concentrate=true
-node0x55d608b31250[shape=record, label="{0x55d608b31250 | {PARENT|(nil)}| BINARY: / | {{LEFT |<left> 0x55d608b31170} | {RIGHT |<right> 0x55d608b312e0}}}", style=filled, fillcolor=mediumturquoise];
-node0x55d608b31170[shape=record, label="{0x55d608b31170 | {PARENT|0x55d608b31250}| BINARY: + | {{LEFT |<left> 0x55d608b31100} | {RIGHT |<right> 0x55d608b311e0}}}", style=filled, fillcolor=indianred];
-node0x55d608b31170 -> node0x55d608b31250:left;
-node0x55d608b31250:left -> node0x55d608b31170;
-node0x55d608b31100[shape=record, label="{0x55d608b31100 | {PARENT|0x55d608b31170}| VAR: x | {{LEFT |<left> (nil)} | {RIGHT |<right> (nil)}}}", style=filled, fillcolor=indianred];
-node0x55d608b31100 -> node0x55d608b31170:left;
-node0x55d608b31170:left -> node0x55d608b31100;
-node0x55d608b311e0[shape=record, label="{0x55d608b311e0 | {PARENT|0x55d608b31170}| CONST: 3 | {{LEFT |<left> (nil)} | {RIGHT |<right> (nil)}}}", style=filled, fillcolor=springgreen];
-node0x55d608b311e0 -> node0x55d608b31170:right;
-node0x55d608b31170:right -> node0x55d608b311e0;
-node0x55d608b312e0[shape=record, label="{0x55d608b312e0 | {PARENT|0x55d608b31250}| VAR: x | {{LEFT |<left> (nil)} | {RIGHT |<right> (nil)}}}", style=filled, fillcolor=springgreen];
-node0x55d608b312e0 -> node0x55d608b31250:right;
-node0x55d608b31250:right -> node0x55d608b312e0;
+node0x5604a0030250[shape=record, label="{0x5604a0030250 | {PARENT|(nil)}| BINARY: / | {{LEFT |<left> 0x5604a0030170} | {RIGHT |<right> 0x5604a00302e0}}}", style=filled, fillcolor=mediumturquoise];
+node0x5604a0030170[shape=record, label="{0x5604a0030170 | {PARENT|0x5604a0030250}| BINARY: + | {{LEFT |<left> 0x5604a0030100} | {RIGHT |<right> 0x5604a00301e0}}}", style=filled, fillcolor=indianred];
+node0x5604a0030170 -> node0x5604a0030250:left;
+node0x5604a0030250:left -> node0x5604a0030170;
+node0x5604a0030100[shape=record, label="{0x5604a0030100 | {PARENT|0x5604a0030170}| VAR: x | {{LEFT |<left> (nil)} | {RIGHT |<right> (nil)}}}", style=filled, fillcolor=indianred];
+node0x5604a0030100 -> node0x5604a0030170:left;
+node0x5604a0030170:left -> node0x5604a0030100;
+node0x5604a00301e0[shape=record, label="{0x5604a00301e0 | {PARENT|0x5604a0030170}| CONST: 3 | {{LEFT |<left> (nil)} | {RIGHT |<right> (nil)}}}", style=filled, fillcolor=springgreen];
+node0x5604a00301e0 -> node0x5604a0030170:right;
+node0x5604a0030170:right -> node0x5604a00301e0;
+node0x5604a00302e0[shape=record, label="{0x5604a00302e0 | {PARENT|0x5604a0030250}| VAR: x | {{LEFT |<left> (nil)} | {RIGHT |<right> (nil)}}}", style=filled, fillcolor=springgreen];
+node0x5604a00302e0 -> node0x5604a0030250:right;
+node0x5604a0030250:right -> node0x5604a00302e0;
 }

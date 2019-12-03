@@ -17,6 +17,8 @@ cstring
 -
 cctype
 -
+cmath
+-
 ../Tree/Tree.h
 /home/alexey/Programming/Tree/Tree.h
 operations.h

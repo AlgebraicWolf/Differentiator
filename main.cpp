@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <cctype>
+#include <cmath>
 
 #include "../Tree/Tree.h"
 
@@ -178,7 +179,7 @@ void saveNode(node_t *node, FILE *f) {
     }
 }
 
-bool optimiseZeroOneMultiplication(node_t *node) {
+bool optimizeZeroOneMultiplication(node_t *node) {
     assert(node);
     operation_t *op = (operation_t *) node->value;
     if (op->operation)
@@ -209,15 +210,15 @@ bool optimiseZeroOneMultiplication(node_t *node) {
     bool flag = false;
 
     if (node->left)
-        flag += optimiseZeroOneMultiplication(node->left);
+        flag += optimizeZeroOneMultiplication(node->left);
 
     if (node->right)
-        flag += optimiseZeroOneMultiplication(node->right);
+        flag += optimizeZeroOneMultiplication(node->right);
 
     return flag;
 }
 
-bool optimiseZeroAddition(node_t *node) {
+bool optimizeZeroAddition(node_t *node) {
     assert(node);
     operation_t *op = (operation_t *) node->value;
 
@@ -240,12 +241,54 @@ bool optimiseZeroAddition(node_t *node) {
     bool flag = false;
 
     if (node->left)
-        flag += optimiseZeroAddition(node->left);
+        flag += optimizeZeroAddition(node->left);
 
     if (node->right)
-        flag += optimiseZeroAddition(node->right);
+        flag += optimizeZeroAddition(node->right);
 
     return flag;
+}
+
+bool optimizeCalculations(node_t *node) {
+    assert(node);
+    operation_t *op = (operation_t *) node->value;
+    switch (op->type) {
+        case BINARY_FUNC:
+        case BINARY: {
+            operation_t *firstOperand = (operation_t *) node->left->value;
+            operation_t *secondOperand = (operation_t *) node->right->value;
+            if (firstOperand->type == CONST && secondOperand->type == CONST) {
+                firstOperand->value = ((double (*)(double, double)) op->exec)(firstOperand->value,
+                                                                              secondOperand->value);
+                node->value = (void *) firstOperand;
+                node->left = nullptr;
+                node->right = nullptr;
+                return true;
+            }
+        }
+            break;
+
+        case UNARY_FUNC: {
+            operation_t *operand = (operation_t *) node->right->value;
+            if(operand->type == CONST) {
+                operand->value = ((double (*) (double)) op->exec) (operand->value);
+
+                node->value = (void *) operand;
+                node->left = nullptr;
+                node->right = nullptr;
+                return true;
+            }
+        }
+            break;
+    }
+    bool optimized = false;
+    if(node->left)
+        optimized += optimizeCalculations(node->left);
+
+    if(node->right)
+        optimized += optimizeCalculations(node->right);
+
+    return optimized;
 }
 
 void saveLaTeX(tree_t *tree, FILE *f) {
@@ -368,8 +411,9 @@ tree_t *differentiateEquation(tree_t *eq) {
 
     while (optStep) {
         optStep = false;
-        optStep += optimiseZeroOneMultiplication(derivative->head);
-        optStep += optimiseZeroAddition(derivative->head);
+        optStep += optimizeZeroOneMultiplication(derivative->head);
+        optStep += optimizeZeroAddition(derivative->head);
+        optStep += optimizeCalculations(derivative->head);
     }
 
     return derivative;
