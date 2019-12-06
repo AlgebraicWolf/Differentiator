@@ -14,6 +14,7 @@
   <component name="ChangeListManager">
     <list default="true" id="fc4cd75f-437a-4b20-b9af-7ea2a9c42b42" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+<<<<<<< Updated upstream
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/CXX.includecache" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/CXX.includecache" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/main.cpp.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Differentiator.dir/main.cpp.o" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/Differentiator" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Differentiator" afterDir="false" />
@@ -23,6 +24,8 @@
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/test.tex" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test.tex" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/operations.h" beforeDir="false" afterPath="$PROJECT_DIR$/operations.h" afterDir="false" />
+=======
+>>>>>>> Stashed changes
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -107,6 +110,7 @@
       <workItem from="1575016750582" duration="32000" />
       <workItem from="1575019516346" duration="7479000" />
       <workItem from="1575032745865" duration="2725000" />
+<<<<<<< Updated upstream
       <workItem from="1575217680601" duration="17545000" />
       <workItem from="1575382051425" duration="640000" />
       <workItem from="1575397604653" duration="16168000" />
