@@ -190,12 +190,8 @@ int main() {
                 break;
 
             case 1:
-                printf("Минутка поэзии\n");
-                say("У Лагранжа и Коши", ALENA, NEUTRAL);
-                say("Члены очень хороши.", ALENA, NEUTRAL);
-                say("А у Шлемильха и Роша самый, говорят, хороший.", ALENA, NEUTRAL);
-                say("ВНИМАНИЕ! Чтобы не вводить пользователей в заблуждение, необходимо упомянуть, что программа записывает разложение с остаточным членом в форме Пеано", ALENA, NEUTRAL);
-                degree = ask("До какой степени раскладываем?", 0, INT_MAX);
+              degree = ask("До какой степени раскладываем?", 0, INT_MAX);
+              break;
         }
 
         int derivableVar = 0;
@@ -203,6 +199,7 @@ int main() {
         if (len > 1) {
             derivativeSymbol = "\\partial ";
             printf("Хмммм, похоже, вы использовали несколько переменных. Будем считать частную производную значит?\nВот список доступных для дифференцирования переменных:\n");
+            say("Хмммм, похоже, вы использовали несколько переменных. Будем считать частную производную значит?", ALENA, NEUTRAL);
             for (int i = 0; i < len; i++)
                 printf("%d: %s\n", i + 1, vars[i]);
             derivableVar = ask("Какую переменную выбираешь?", 1, len) - 1;
@@ -220,7 +217,7 @@ void performRoutine(tree_t *eqTree, int len, int mode, int degree, int derivable
     double *values = nullptr;
     if (mode == 1) {
         printf("Пожалуйста, укажите, в какой точке мне разложить\n");
-        ask("Пожалуйста, укажите, в какой точке мне разложить", ALENA, NEUTRAL);
+        say("Пожалуйста, укажите, в какой точке мне разложить", ALENA, NEUTRAL);
         positions = (double *) calloc(len, sizeof(double));
         values = (double *) calloc(degree + 1, sizeof(double));
         for (int i = 0; i < len; i++) {
@@ -288,6 +285,7 @@ void performRoutine(tree_t *eqTree, int len, int mode, int degree, int derivable
     }
 
     printf("Готово!\n");
+    say("Готово!", ALENA, NEUTRAL);
     if (mode == 0) {
         fprintf(difDump, "Искомая производная: \n\\begin{gather}\n\\frac{%s^{%d}}{%s{%s}^{%d}}\\left(",
                 derivativeSymbol, degree, derivativeSymbol,
