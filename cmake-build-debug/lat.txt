@@ -1,0 +1,10 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\begin{document}
+\begin{equation}
+ \frac{ \left(\left(0 - \left( { \left(x + 10\right) }^{ 0 }  \cdot 2 + 0\right) \cdot \left(x + 10 - x\right) + 0\right) \cdot  {  { \left(x + 10\right) }^{ 2 }  }^{ 2 }  -  {  { \left(x + 10\right) }^{ 2 }  }^{ 1 }  \cdot 2 \cdot \left(0 -  { \left(x + 10\right) }^{ 1 }  \cdot 2 \cdot \left(x + 10 - x\right)\right)\right) }{  {  {  { \left(x + 10\right) }^{ 2 }  }^{ 2 }  }^{ 2 }  }
+\end{equation}
+\end{document}
