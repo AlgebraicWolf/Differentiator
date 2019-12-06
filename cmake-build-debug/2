@@ -1,0 +1,4 @@
+sox WARN wav: Length in output .wav header will be wrong since can't seek to fix it
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100  159k    0  158k  100   261   130k    214  0:00:01  0:00:01 --:--:--  130k100  159k    0  158k  100   261   130k    213  0:00:01  0:00:01 --:--:--  130k
