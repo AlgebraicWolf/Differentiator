@@ -42,6 +42,35 @@ enum OP_TYPE {
     BINARY_FUNC //pow(x, x)
 };
 
+enum VOICES {
+    OKSANA,
+    JANE,
+    OMAZH,
+    ZAHAR,
+    ERMIL,
+    SILAERKAN,
+    ERKANYAVAS,
+    ALYSS,
+    NICK,
+    ALENA,
+    FILIPP
+};
+const int KEY_ACTUAL_ENTER = 10;
+
+const size_t MAX_VOICE_SIZE = 10;
+const size_t MAX_EMOTION_SIZE = 7;
+const size_t MAX_DUMMY_SIZE = 30;
+
+const size_t SUBQUESTION_SIZE = 65;
+
+const size_t MAX_LINE_SIZE = 256;
+
+enum EMOTIONS {
+    GOOD,
+    EVIL,
+    NEUTRAL
+};
+
 struct operation_t {
     int parenthesisPriority;
     OP_TYPE type;
@@ -77,6 +106,8 @@ char *loadFile(const char *filename);
 
 size_t getFilesize(FILE *f);
 
+void say(const char *prompt, VOICES voice, EMOTIONS emotion);
+
 void saveSubequation(node_t *subeq, FILE *output);
 
 void saveEquation(tree_t *eq, const char *filename);
@@ -92,6 +123,8 @@ double executeTree(tree_t *tree, double *vars, char **varnames);
 tree_t *differentiateEquation(tree_t *eq, char *var, const char *derivativeSymbol, int dumpLevel, FILE *dump);
 
 char *fprintfPointRepresentation(FILE *f, char *var, double x);
+
+void performRoutine(tree_t *eqTree, int len, int mode, int degree, int derivableVar, int report, const char *derivativeSymbol, char **vars);
 
 operation_t *makeOperation(int parenthesisPriority, OP_TYPE type, char *operation, char *latexPrefix, char *latexInfix,
                            char *latexSuffix, double (*exec)(double, double),
@@ -125,7 +158,9 @@ char *dumpOperation(void *op) {
 int ask(const char *question, int min, int max) {
     int ans = min - 1;
     while (ans < min || ans > max) {
-        printf("%s\n>", question);
+        printf("%s\n", question);
+        say(question, ALENA, NEUTRAL);
+        printf(">");
         scanf("%d", &ans);
     }
     return ans;
@@ -136,11 +171,16 @@ int main() {
     char *eq = loadFile("input.txt");
     auto vars = (char **) calloc((strchr(eq, '\0') - eq) / 2 + 1, sizeof(char *));
     tree_t *eqTree = getG(eq, vars);
+    if(!eqTree) {
+        printf("Дружок-пирожок, а формула-то у тебя с ошибкой!");
+        say("Дружок-пирожок, а формула-то у тебя с ошибкой!", ALENA, NEUTRAL);
+        return 0;
+    }
     int len = findEmpty(vars) - vars;
     if (len > 0) {
         int report = ask("Хотите получать подробные отчеты о дифференцировании? (0 - нет, 1 - да)", 0, 1);
 
-        int mode = ask("Шо телать будем? (0 - просто дифференцируем, 1 - разложим по Тейлору)", 0, 1);
+        int mode = ask("Шо делать будем? (0 - просто дифференцируем, 1 - разложим по Тейлору)", 0, 1);
 
         int degree = 0;
 
@@ -150,6 +190,11 @@ int main() {
                 break;
 
             case 1:
+                printf("Минутка поэзии\n");
+                say("У Лагранжа и Коши", ALENA, NEUTRAL);
+                say("Члены очень хороши.", ALENA, NEUTRAL);
+                say("А у Шлемильха и Роша самый, говорят, хороший.", ALENA, NEUTRAL);
+                say("ВНИМАНИЕ! Чтобы не вводить пользователей в заблуждение, необходимо упомянуть, что программа записивает разложение с остаточным членом в форме Пеано", ALENA, NEUTRAL);
                 degree = ask("До какой степени раскладываем?", 0, INT_MAX);
         }
 
@@ -164,113 +209,122 @@ int main() {
         } else {
             derivativeSymbol = "d";
         }
-        FILE *difDump = fopen("dif.tex", "w");
-        fprintf(difDump, "\\documentclass{article}\n"
-                         "\\usepackage[utf8]{inputenc}\n"
-                         "\\usepackage[russian]{babel}\n"
-                         "\\usepackage{graphicx}\n"
-                         "\\usepackage{environ}\n"
-                         "\\usepackage{etoolbox}\n"
-                         "\\usepackage{amsmath}\n"
-                         "\\usepackage{resizegather}\n"
-                         "\n"
-                         "\\begin{document}\n\n");
-        tree_t *derivative = eqTree;
-        double *positions = nullptr;
-        double *values = nullptr;
-        if (mode == 1) {
-            printf("Пожалуйста, укажите, в какой точке мне разложить\n");
-            positions = (double *) calloc(len, sizeof(double));
-            values = (double *) calloc(degree + 1, sizeof(double));
-            for (int i = 0; i < len; i++) {
-                printf("%s=", vars[i]);
-                scanf("%lf", positions + i);
-            }
-        }
+        performRoutine(eqTree, len, mode, degree, derivableVar, report, derivativeSymbol, vars);
 
-        if(mode == 0)
-            printf("Дифференцирую...\n");
-        else
-            printf("Раскладываю...\n");
-
-        if (mode == 0) {
-            fprintf(difDump, "Требуется найти:\n\\begin{gather}\n\\frac{%s^{%d}}{%s{%s}^{%d}}\\left(", derivativeSymbol,
-                    degree, derivativeSymbol, vars[derivableVar],
-                    degree);
-            saveNode(eqTree->head, difDump);
-            fprintf(difDump, "\\right)\n\\end{gather}");
-        } else if (mode == 1) {
-            fprintf(difDump, "Требуется разложить в ряд Тейлора до $o(");
-            if (positions[derivableVar] == 0)
-                fprintf(difDump, "{%s}^{%d})$", vars[derivableVar], degree);
-            else if (positions[derivableVar] < 0)
-                fprintf(difDump, "{(%s+%lg)}^{%d})$", vars[derivableVar], -positions[derivableVar], degree);
-            else
-                fprintf(difDump, "{(%s-%lg)}^{%d})$", vars[derivableVar], positions[derivableVar], degree);
-
-            fprintf(difDump, "\n\\begin{gather}");
-            saveNode(eqTree->head, difDump);
-            fprintf(difDump, "\n\\end{gather}");
-        }
-
-        if(mode == 1) {
-            values[0] = executeTree(eqTree, positions, vars);
-            fprintf(difDump, "Значение функции в заданной точке: $%lg$ \\\\ \n", values[0]);
-        }
-
-        for (int i = 0; i < degree; i++) {
-            fprintf(difDump, "Вычисляем\n\\begin{gather}\n\\frac{%s^{%d}}{%s{%s}^{%d}}\\left(", derivativeSymbol,
-                    i + 1, derivativeSymbol, vars[derivableVar], i + 1);
-            saveNode(eqTree->head, difDump);
-            fprintf(difDump, "\\right)=\\frac{%s}{%s%s}\\left(", derivativeSymbol, derivativeSymbol,
-                    vars[derivableVar]);
-            saveNode(derivative->head, difDump);
-            fprintf(difDump, "\\right)\n\\end{gather}\n");
-            derivative = differentiateEquation(derivative, vars[derivableVar], derivativeSymbol, report, difDump);
-            if (mode == 1) {
-                values[i + 1] = executeTree(derivative, positions, vars);
-                fprintf(difDump, "Значение производной в заданной точке: $%lg$ \\ \n", values[i + 1]);
-            }
-        }
-
-        printf("Готово!\n");
-        if (mode == 0) {
-            fprintf(difDump, "Искомая производная: \n\\begin{gather}\n\\frac{%s^{%d}}{%s{%s}^{%d}}\\left(",
-                    derivativeSymbol, degree, derivativeSymbol,
-                    vars[derivableVar], degree);
-            saveNode(eqTree->head, difDump);
-            fprintf(difDump, "\\right)=", vars[derivableVar]);
-            saveNode(derivative->head, difDump);
-            fprintf(difDump, "\n\\end{gather}\n\\end{document}");
-        }
-        else if(mode == 1) {
-            fprintf(difDump, "Искомое разложение:\n\\begin{gather}\n");
-            saveNode(eqTree->head, difDump);
-            fprintf(difDump, "=");
-            if(values[0] != 0)
-                fprintf(difDump, "%lg", values[0]);
-
-            for(int i = 1; i <= degree; i++) {
-                if(values[i] != 0) {
-                    if(i == 1 && fabs(values[0]) < EPS)
-                        fprintf(difDump, "\\frac{{");
-                    else if(fabs(values[i] -  1) < EPS)
-                        fprintf(difDump, "+\\frac{{");
-                    else if(fabs(values[i] + 1) < EPS)
-                        fprintf(difDump, "-\\frac{{");
-                    else
-                        fprintf(difDump, "+\\frac{%lg \\cdot {", values[i]);
-                    fprintfPointRepresentation(difDump, vars[derivableVar], positions[derivableVar]);
-                    fprintf(difDump, "}^{%d}}{%d!}", i, i);
-                }
-            }
-            fprintf(difDump, "+o({");
-            fprintfPointRepresentation(difDump, vars[derivableVar], positions[derivableVar]);
-            fprintf(difDump, "}^{%d})\\end{gather}\n\\end{document}", degree);
-        }
-        fclose(difDump);
     }
     return 0;
+}
+
+void performRoutine(tree_t *eqTree, int len, int mode, int degree, int derivableVar, int report, const char *derivativeSymbol, char **vars) {
+    double *positions = nullptr;
+    double *values = nullptr;
+    if (mode == 1) {
+        printf("Пожалуйста, укажите, в какой точке мне разложить\n");
+        ask("Пожалуйста, укажите, в какой точке мне разложить", ALENA, NEUTRAL);
+        positions = (double *) calloc(len, sizeof(double));
+        values = (double *) calloc(degree + 1, sizeof(double));
+        for (int i = 0; i < len; i++) {
+            printf("%s=", vars[i]);
+            scanf("%lf", positions + i);
+        }
+    }
+
+    FILE *difDump = fopen("dif.tex", "w");
+    fprintf(difDump, "\\documentclass{article}\n"
+                     "\\usepackage[utf8]{inputenc}\n"
+                     "\\usepackage[russian]{babel}\n"
+                     "\\usepackage{graphicx}\n"
+                     "\\usepackage{environ}\n"
+                     "\\usepackage{etoolbox}\n"
+                     "\\usepackage{amsmath}\n"
+                     "\\usepackage{resizegather}\n"
+                     "\n"
+                     "\\begin{document}\n\n");
+    tree_t *derivative = eqTree;
+
+    if(mode == 0)
+        printf("Дифференцирую...\n");
+    else
+        printf("Раскладываю...\n");
+
+    if (mode == 0) {
+        fprintf(difDump, "Требуется найти:\n\\begin{gather}\n\\frac{%s^{%d}}{%s{%s}^{%d}}\\left(", derivativeSymbol,
+                degree, derivativeSymbol, vars[derivableVar],
+                degree);
+        saveNode(eqTree->head, difDump);
+        fprintf(difDump, "\\right)\n\\end{gather}");
+    } else if (mode == 1) {
+        fprintf(difDump, "Требуется разложить в ряд Тейлора до $o(");
+        if (positions[derivableVar] == 0)
+            fprintf(difDump, "{%s}^{%d})$", vars[derivableVar], degree);
+        else if (positions[derivableVar] < 0)
+            fprintf(difDump, "{(%s+%lg)}^{%d})$", vars[derivableVar], -positions[derivableVar], degree);
+        else
+            fprintf(difDump, "{(%s-%lg)}^{%d})$", vars[derivableVar], positions[derivableVar], degree);
+
+        fprintf(difDump, "\n\\begin{gather}");
+        saveNode(eqTree->head, difDump);
+        fprintf(difDump, "\n\\end{gather}");
+    }
+
+    if(mode == 1) {
+        values[0] = executeTree(eqTree, positions, vars);
+        fprintf(difDump, "Значение функции в заданной точке: $%lg$ \\\\ \n", values[0]);
+    }
+
+    for (int i = 0; i < degree; i++) {
+        fprintf(difDump, "Вычисляем\n\\begin{gather}\n\\frac{%s^{%d}}{%s{%s}^{%d}}\\left(", derivativeSymbol,
+                i + 1, derivativeSymbol, vars[derivableVar], i + 1);
+        saveNode(eqTree->head, difDump);
+        fprintf(difDump, "\\right)=\\frac{%s}{%s%s}\\left(", derivativeSymbol, derivativeSymbol,
+                vars[derivableVar]);
+        saveNode(derivative->head, difDump);
+        fprintf(difDump, "\\right)\n\\end{gather}\n");
+        derivative = differentiateEquation(derivative, vars[derivableVar], derivativeSymbol, report, difDump);
+        if (mode == 1) {
+            values[i + 1] = executeTree(derivative, positions, vars);
+            fprintf(difDump, "Значение производной в заданной точке: $%lg$ \\ \n", values[i + 1]);
+        }
+    }
+
+    printf("Готово!\n");
+    if (mode == 0) {
+        fprintf(difDump, "Искомая производная: \n\\begin{gather}\n\\frac{%s^{%d}}{%s{%s}^{%d}}\\left(",
+                derivativeSymbol, degree, derivativeSymbol,
+                vars[derivableVar], degree);
+        saveNode(eqTree->head, difDump);
+        fprintf(difDump, "\\right)=", vars[derivableVar]);
+        saveNode(derivative->head, difDump);
+        fprintf(difDump, "\n\\end{gather}\n\\end{document}");
+    }
+    else if(mode == 1) {
+        fprintf(difDump, "Искомое разложение:\n\\begin{gather}\n");
+        saveNode(eqTree->head, difDump);
+        fprintf(difDump, "=");
+        if(values[0] != 0)
+            fprintf(difDump, "%lg", values[0]);
+
+        for(int i = 1; i <= degree; i++) {
+            if(values[i] != 0) {
+                if(i == 1 && fabs(values[0]) < EPS)
+                    fprintf(difDump, "\\frac{{");
+                else if(fabs(values[i] -  1) < EPS)
+                    fprintf(difDump, "+\\frac{{");
+                else if(fabs(values[i] + 1) < EPS)
+                    fprintf(difDump, "-\\frac{{");
+                else if(values[i] < 0)
+                    fprintf(difDump, "-\\frac{%lg \\cdot {", -values[i]);
+                else
+                    fprintf(difDump, "+\\frac{%lg \\cdot {", values[i]);
+                fprintfPointRepresentation(difDump, vars[derivableVar], positions[derivableVar]);
+                fprintf(difDump, "}^{%d}}{%d!}", i, i);
+            }
+        }
+        fprintf(difDump, "+o({");
+        fprintfPointRepresentation(difDump, vars[derivableVar], positions[derivableVar]);
+        fprintf(difDump, "}^{%d})\\end{gather}\n\\end{document}", degree);
+    }
+    fclose(difDump);
 }
 
 char *fprintfPointRepresentation(FILE *f, char *var, double x) {
@@ -1102,11 +1156,16 @@ node_t *getT(const char **e, char **vars) {
     assert(*e);
 
     node_t *subtree = getP(e, vars);
+    if(!subtree)
+        return nullptr;
     node_t *suptree = nullptr;
     skipWhitespaces(e);
     while ((suptree = getFirstPriotityOp(**e))) {
         nextChar(e);
         node_t *subtree2 = getP(e, vars);
+        if(!subtree2)
+            return nullptr;
+
         mergeSubtrees(subtree, subtree2, suptree);
         subtree = suptree;
     }
@@ -1119,11 +1178,16 @@ node_t *getE(const char **e, char **vars) {
     assert(*e);
 
     node_t *subtree = getT(e, vars);
+    if(!subtree)
+        return nullptr;
+
     node_t *suptree = nullptr;
     skipWhitespaces(e);
     while ((suptree = getLastPriotityOp(**e))) {
         nextChar(e);
         node_t *subtree2 = getT(e, vars);
+        if(!subtree2)
+            return nullptr;
         mergeSubtrees(subtree, subtree2, suptree);
         subtree = suptree;
     }
@@ -1133,6 +1197,10 @@ node_t *getE(const char **e, char **vars) {
 tree_t *getG(const char *e, char **vars) {
     assert(e);
     node_t *subtree = getE(&e, vars);
+
+    if(!subtree)
+        return nullptr;
+
     if (*e != '\0')
         return nullptr;
 
@@ -1174,3 +1242,60 @@ char *loadFile(const char *filename) {
     return content;
 }
 
+void say(const char *prompt, VOICES voice, EMOTIONS emotion) {
+    assert(prompt);
+
+    size_t length = strlen(prompt);
+    char *request = (char *) calloc(MAX_DUMMY_SIZE + MAX_EMOTION_SIZE + MAX_VOICE_SIZE + length, sizeof(char));
+    size_t offset = sprintf(request, "./say.sh \"%s\" ", prompt);
+
+    switch (voice) {
+        case OKSANA:
+            offset += sprintf(request + offset, "%s ", "oksana");
+            break;
+        case JANE:
+            offset += sprintf(request + offset, "%s ", "jane");
+            break;
+        case OMAZH:
+            offset += sprintf(request + offset, "%s ", "omazh");
+            break;
+        case ZAHAR:
+            offset += sprintf(request + offset, "%s ", "zahar");
+            break;
+        case ERMIL:
+            offset += sprintf(request + offset, "%s ", "ermil");
+            break;
+        case SILAERKAN:
+            offset += sprintf(request + offset, "%s ", "silaerkan");
+            break;
+        case ERKANYAVAS:
+            offset += sprintf(request + offset, "%s ", "erkanyavas");
+            break;
+        case ALYSS:
+            offset += sprintf(request + offset, "%s ", "alyss");
+            break;
+        case NICK:
+            offset += sprintf(request + offset, "%s ", "nick");
+            break;
+        case ALENA:
+            offset += sprintf(request + offset, "%s ", "alena");
+            break;
+        case FILIPP:
+            offset += sprintf(request + offset, "%s ", "filipp");
+            break;
+    }
+
+    switch (emotion) {
+        case GOOD:
+            sprintf(request + offset, "%s", "good 1&>2 /dev/null");
+            break;
+        case EVIL:
+            sprintf(request + offset, "%s", "evil 1&>2 /dev/null");
+            break;
+        case NEUTRAL:
+            sprintf(request + offset, "%s", "neutral 1&>2 /dev/null");
+            break;
+    }
+    system(request);
+    free(request);
+}
